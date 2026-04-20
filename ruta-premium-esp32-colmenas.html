@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruta premium ESP32 para colmenas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem; --space-20: 5rem;
+      --color-bg: #f7f6f2; --color-surface: #f9f8f5; --color-surface-2: #fbfbf9; --color-surface-offset: #f3f0ec; --color-border: #d4d1ca; --color-text: #28251d; --color-text-muted: #6e6a63; --color-text-faint: #9e9b95; --color-primary: #01696f; --color-primary-hover: #0c4e54; --color-primary-highlight: #cedcd8; --color-warning: #964219; --color-success: #437a22; --color-error: #a12c7b; --color-blue: #006494; --shadow-sm: 0 1px 2px rgba(40,37,29,.06); --shadow-md: 0 8px 20px rgba(40,37,29,.08); --shadow-lg: 0 20px 40px rgba(40,37,29,.12); --radius-sm: .375rem; --radius-md: .5rem; --radius-lg: .75rem; --radius-xl: 1rem; --radius-full: 9999px; --font-body: 'Inter', sans-serif; --font-mono: 'IBM Plex Mono', monospace; --content: 1200px;
+    }
+    [data-theme="dark"] {
+      --color-bg: #171614; --color-surface: #1c1b19; --color-surface-2: #201f1d; --color-surface-offset: #22211f; --color-border: #393836; --color-text: #cdccca; --color-text-muted: #989792; --color-text-faint: #6e6d68; --color-primary: #4f98a3; --color-primary-hover: #227f8b; --color-primary-highlight: #313b3b; --color-warning: #bb653b; --color-success: #6daa45; --color-error: #d163a7; --color-blue: #5591c7; --shadow-sm: 0 1px 2px rgba(0,0,0,.2); --shadow-md: 0 8px 20px rgba(0,0,0,.28); --shadow-lg: 0 20px 40px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--font-body); font-size: var(--text-base); line-height: 1.6; background: var(--color-bg); color: var(--color-text); }
+    a { color: inherit; }
+    .app { display: grid; grid-template-columns: 290px 1fr; min-height: 100vh; }
+    .sidebar { position: sticky; top: 0; height: 100vh; overflow: auto; background: var(--color-surface); border-right: 1px solid var(--color-border); padding: var(--space-6); }
+    .brand { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-8); }
+    .logo { width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(135deg, var(--color-primary), var(--color-blue)); display: grid; place-items: center; color: white; box-shadow: var(--shadow-md); }
+    .brand h1 { font-size: var(--text-lg); line-height: 1.1; margin: 0; }
+    .brand p { margin: .2rem 0 0; color: var(--color-text-muted); font-size: var(--text-xs); }
+    .nav-group { margin-bottom: var(--space-6); }
+    .nav-title { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin: 0 0 var(--space-3); }
+    .nav a { display: block; text-decoration: none; padding: .8rem .9rem; border-radius: var(--radius-lg); color: var(--color-text-muted); font-size: var(--text-sm); }
+    .nav a:hover, .nav a.active { background: var(--color-primary-highlight); color: var(--color-text); }
+    .main { min-width: 0; }
+    .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-4) var(--space-6); background: color-mix(in srgb, var(--color-bg) 84%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent); }
+    .topbar .meta { color: var(--color-text-muted); font-size: var(--text-sm); }
+    .theme-toggle { border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); padding: .65rem .85rem; color: var(--color-text); cursor: pointer; }
+    .content { max-width: var(--content); margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-16); }
+    .hero { display: grid; grid-template-columns: 1.25fr .9fr; gap: var(--space-6); align-items: stretch; margin-bottom: var(--space-8); }
+    .panel { background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
+    .hero-main { padding: var(--space-8); }
+    .eyebrow { display: inline-flex; gap: .5rem; align-items: center; background: var(--color-primary-highlight); color: var(--color-primary-hover); border-radius: var(--radius-full); padding: .4rem .75rem; font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .hero h2 { font-size: var(--text-xl); line-height: 1.05; margin: var(--space-4) 0 var(--space-4); max-width: 14ch; }
+    .hero p { color: var(--color-text-muted); max-width: 64ch; }
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-6); }
+    .kpi { padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+    .kpi span { display: block; font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .08em; }
+    .kpi strong { display: block; font-size: var(--text-lg); margin-top: .35rem; }
+    .roadmap { padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-4); }
+    .step-mini { display: flex; gap: var(--space-3); align-items: flex-start; }
+    .bubble { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: var(--text-xs); font-weight: 800; flex: 0 0 auto; background: var(--color-primary-highlight); color: var(--color-primary-hover); }
+    .step-mini h3 { margin: .1rem 0; font-size: var(--text-sm); }
+    .step-mini p { margin: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+    .section { margin-top: var(--space-10); }
+    .section h3 { font-size: var(--text-xl); margin: 0 0 var(--space-3); }
+    .section > p.lead { margin: 0 0 var(--space-6); color: var(--color-text-muted); max-width: 72ch; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-5); }
+    .card { padding: var(--space-6); background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
+    .card h4 { margin: 0 0 var(--space-3); font-size: var(--text-lg); }
+    .card p { margin: 0 0 var(--space-4); color: var(--color-text-muted); }
+    .card ul { margin: 0; padding-left: 1.1rem; color: var(--color-text); }
+    .card li { margin: 0 0 .5rem; }
+    .timeline { display: grid; gap: var(--space-4); }
+    .timeline-item { display: grid; grid-template-columns: 120px 1fr; gap: var(--space-4); align-items: start; padding: var(--space-5); border-radius: var(--radius-xl); background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); }
+    .phase { font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-primary); padding-top: .2rem; }
+    .timeline-item h4 { margin: 0 0 .45rem; font-size: var(--text-lg); }
+    .timeline-item p { margin: 0 0 .7rem; color: var(--color-text-muted); }
+    .tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .tag { padding: .4rem .65rem; border-radius: var(--radius-full); background: var(--color-surface-offset); border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); font-size: var(--text-xs); }
+    .stack { display: grid; gap: var(--space-4); }
+    .stack-row { padding: var(--space-5); background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-xl); }
+    .stack-row h4 { margin: 0 0 .35rem; font-size: var(--text-lg); }
+    .stack-row p { margin: 0 0 .8rem; color: var(--color-text-muted); }
+    .stack-row code { font-family: var(--font-mono); font-size: .9em; background: var(--color-surface-offset); padding: .15rem .4rem; border-radius: .35rem; }
+    .checklist { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-4); }
+    .check { padding: var(--space-5); background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-xl); }
+    .check strong { display: block; margin-bottom: .35rem; }
+    .callout { padding: var(--space-6); border-radius: var(--radius-xl); background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary-highlight) 70%, var(--color-surface) 30%), var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent); }
+    .callout h4 { margin: 0 0 .4rem; font-size: var(--text-lg); }
+    .callout p { margin: 0; color: var(--color-text-muted); }
+    .footer { margin-top: var(--space-12); padding-top: var(--space-6); border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: var(--text-sm); }
+    @media (max-width: 1040px) { .app { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; border-right: 0; border-bottom: 1px solid var(--color-border); } .hero, .grid-2, .checklist { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .content, .topbar, .sidebar { padding-left: var(--space-4); padding-right: var(--space-4); } .timeline-item { grid-template-columns: 1fr; } .kpis { grid-template-columns: 1fr; } .hero-main, .roadmap, .card, .stack-row, .check, .callout { padding: var(--space-5); } .hero h2, .section h3 { max-width: none; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-label="Logo colmena">
+            <path d="M7 4.5h10l5 7.5-5 7.5H7L2 12l5-7.5Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.5 8h5M8.5 12h7M9.5 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Ruta premium ESP32</h1>
+          <p>Colmenas con WiFi y software libre</p>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="nav-group">
+          <p class="nav-title">Ruta</p>
+          <a href="#objetivo" class="active">Objetivo</a>
+          <a href="#etapa1">Etapa 1 · Hardware</a>
+          <a href="#etapa2">Etapa 2 · Firmware</a>
+          <a href="#etapa3">Etapa 3 · Red WiFi</a>
+          <a href="#etapa4">Etapa 4 · Backend</a>
+          <a href="#etapa5">Etapa 5 · Dashboards</a>
+          <a href="#etapa6">Etapa 6 · Alertas</a>
+          <a href="#etapa7">Etapa 7 · IA y anomalías</a>
+          <a href="#etapa8">Etapa 8 · Producción</a>
+        </div>
+        <div class="nav-group">
+          <p class="nav-title">Apéndices</p>
+          <a href="#stack">Stack recomendado</a>
+          <a href="#cronograma">Cronograma</a>
+          <a href="#checklist">Checklist final</a>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <strong>Ruta premium con ESP32 + WiFi</strong>
+          <div class="meta">Sin LoRa, sin software privativo, con herramientas open source y gratuitas</div>
+        </div>
+        <button class="theme-toggle" data-theme-toggle aria-label="Cambiar tema">🌙</button>
+      </div>
+
+      <div class="content">
+        <section class="hero panel" id="objetivo">
+          <div class="hero-main">
+            <span class="eyebrow">Plan maestro</span>
+            <h2>La ruta más realista para llegar a una versión premium usando ESP32, WiFi y software 100% libre</h2>
+            <p>La versión premium no significa usar hardware carísimo desde el día uno. Significa diseñar bien la arquitectura desde el inicio: sensores robustos, firmware estable, telemetría confiable, backend propio, dashboards útiles y detección de anomalías físicas y biológicas con datos históricos.</p>
+            <div class="kpis">
+              <div class="kpi"><span>Núcleo</span><strong>ESP32 + WiFi</strong></div>
+              <div class="kpi"><span>Backend</span><strong>MQTT + InfluxDB</strong></div>
+              <div class="kpi"><span>Visualización</span><strong>Grafana + Node-RED</strong></div>
+            </div>
+          </div>
+          <div class="roadmap">
+            <div class="step-mini"><div class="bubble">1</div><div><h3>Construye estable</h3><p>Primero hardware y energía confiable.</p></div></div>
+            <div class="step-mini"><div class="bubble">2</div><div><h3>Telemetría limpia</h3><p>Luego firmware, WiFi y backend.</p></div></div>
+            <div class="step-mini"><div class="bubble">3</div><div><h3>Operación premium</h3><p>Finalmente alertas, IA y mantenimiento.</p></div></div>
+          </div>
+        </section>
+
+        <section class="section" id="etapa1">
+          <h3>Etapa 1 · Define el hardware premium</h3>
+          <p class="lead">La diferencia entre un prototipo y una versión premium casi siempre está en la calidad mecánica, la alimentación y el encapsulado. Si esas tres cosas fallan, todo lo demás falla.</p>
+          <div class="grid-2">
+            <article class="card">
+              <h4>Sensores mínimos recomendados</h4>
+              <ul>
+                <li><strong>Báscula:</strong> 4 celdas de carga + HX711 o módulo industrial equivalente.</li>
+                <li><strong>Temperatura de cría:</strong> DS18B20 sellado.</li>
+                <li><strong>Temperatura y humedad general:</strong> SHT31 o BME280 mejor que DHT22 para una versión premium.</li>
+                <li><strong>Movimiento/intrusión:</strong> MPU6050, ICM-20948 o IMU similar.</li>
+                <li><strong>Audio:</strong> micrófono MEMS I2S, por ejemplo INMP441.</li>
+                <li><strong>Apertura:</strong> reed switch o microswitch oculto.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h4>Mejoras que sí valen la pena</h4>
+              <ul>
+                <li>Caja IP65 o mejor, con respiración controlada y prensaestopas.</li>
+                <li>Conectores desmontables para sensores, no cables soldados directos.</li>
+                <li>PCB propia o protoboard soldada en placa perforada seria, no breadboard.</li>
+                <li>Protección contra humedad, sulfato, vibración y condensación.</li>
+                <li>Separar físicamente electrónica y zona caliente/húmeda de la colmena.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="etapa2">
+          <h3>Etapa 2 · Diseña el firmware como si fuera un producto</h3>
+          <p class="lead">La versión premium con ESP32 se consigue escribiendo un firmware robusto: modular, recuperable, actualizable y preparado para fallos de red o energía.</p>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="phase">Firmware base</div>
+              <div>
+                <h4>Usa ESP-IDF o PlatformIO bien estructurado</h4>
+                <p>Si quieres algo serio, evita sketches monolíticos enormes. Divide el firmware por módulos: sensores, energía, WiFi, MQTT, almacenamiento local, reglas y OTA.</p>
+                <div class="tags"><span class="tag">ESP-IDF</span><span class="tag">PlatformIO</span><span class="tag">FreeRTOS</span><span class="tag">OTA</span></div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="phase">Lógica local</div>
+              <div>
+                <h4>Haz detección en el borde</h4>
+                <p>No envíes solo datos crudos. El ESP32 debe detectar eventos locales: vibración sospechosa, inclinación, caída de peso, apertura, subida anómala de humedad o cambios acústicos fuera de umbral.</p>
+                <div class="tags"><span class="tag">Edge rules</span><span class="tag">Buffers locales</span><span class="tag">Estados de alarma</span></div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="phase">Resiliencia</div>
+              <div>
+                <h4>Prepara reconexión y almacenamiento offline</h4>
+                <p>Si el WiFi cae, el nodo no debe morir. Guarda muestras localmente y reenvíalas cuando vuelva la red. Usa una cola en RAM más una estrategia de persistencia simple si el volumen crece.</p>
+                <div class="tags"><span class="tag">Retry</span><span class="tag">Watchdog</span><span class="tag">Store & forward</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="etapa3">
+          <h3>Etapa 3 · Resuelve bien la red WiFi</h3>
+          <p class="lead">Como no necesitas LoRa, la clave es dar cobertura WiFi real al apiario. El error común es probar al lado del router y asumir que el sistema ya está listo.</p>
+          <div class="grid-2">
+            <article class="card">
+              <h4>Topología recomendada</h4>
+              <ul>
+                <li>Router o AP exterior dedicado para el apiario.</li>
+                <li>SSID exclusivo para sensores.</li>
+                <li>IP fija por DHCP reservation para cada ESP32.</li>
+                <li>VLAN o red separada si quieres más orden y seguridad.</li>
+                <li>Broker MQTT en servidor local o mini PC dentro de la misma red.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h4>Buenas prácticas</h4>
+              <ul>
+                <li>Medir RSSI real en cada colmena.</li>
+                <li>Evitar cajas metálicas que degraden la señal.</li>
+                <li>Usar antenas mejores solo si el diseño del nodo lo permite.</li>
+                <li>Configurar reconexión automática con backoff.</li>
+                <li>No depender de internet para la operación local básica.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="etapa4">
+          <h3>Etapa 4 · Monta un backend open source de verdad</h3>
+          <p class="lead">Tu versión premium debe tener backend propio. Así controlas los datos, el histórico, las reglas, las alertas y la evolución futura sin pagar licencias.</p>
+          <div class="stack">
+            <div class="stack-row">
+              <h4>Broker MQTT</h4>
+              <p><code>Mosquitto</code> es la opción más simple y estable para recibir telemetría desde los ESP32. Cada nodo publica topics por colmena y por sensor.</p>
+              <div class="tags"><span class="tag">Mosquitto</span><span class="tag">MQTT</span><span class="tag">Docker opcional</span></div>
+            </div>
+            <div class="stack-row">
+              <h4>Flujo y automatización</h4>
+              <p><code>Node-RED</code> sirve para transformar mensajes, guardar en base de datos, crear reglas, enriquecer eventos y disparar alertas sin escribir toda la lógica desde cero.</p>
+              <div class="tags"><span class="tag">Node-RED</span><span class="tag">Flows</span><span class="tag">Rules engine</span></div>
+            </div>
+            <div class="stack-row">
+              <h4>Series temporales</h4>
+              <p><code>InfluxDB</code> es ideal para peso, temperatura, humedad, vibración y telemetría de estado. Si quieres simplicidad extrema, también puedes usar PostgreSQL + TimescaleDB.</p>
+              <div class="tags"><span class="tag">InfluxDB</span><span class="tag">TimescaleDB</span><span class="tag">Historiales</span></div>
+            </div>
+            <div class="stack-row">
+              <h4>API y servicios internos</h4>
+              <p>Puedes empezar sin API formal, pero en la versión premium conviene exponer una pequeña API en <code>FastAPI</code> para consultas, integraciones y módulos de IA.</p>
+              <div class="tags"><span class="tag">FastAPI</span><span class="tag">Python</span><span class="tag">Servicios internos</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="etapa5">
+          <h3>Etapa 5 · Dashboards operativos y no solo bonitos</h3>
+          <p class="lead">La vista premium no es tener muchas gráficas; es mostrar las pocas que permiten tomar decisiones rápidas en minutos.</p>
+          <div class="grid-2">
+            <article class="card">
+              <h4>Vistas esenciales en Grafana</h4>
+              <ul>
+                <li>Peso por colmena, con cambio diario y semanal.</li>
+                <li>Temperatura de cría y humedad interna.</li>
+                <li>Estado de batería y calidad WiFi.</li>
+                <li>Eventos de intrusión física.</li>
+                <li>Índice de anomalía biológica por colmena.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h4>Qué debe verse primero</h4>
+              <ul>
+                <li>Semáforo por colmena: normal, alerta, crítica.</li>
+                <li>Último evento detectado.</li>
+                <li>Tendencia de peso 24 h y 7 días.</li>
+                <li>Anomalías simultáneas: audio + humedad + temperatura.</li>
+                <li>Nodos desconectados o batería baja.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="etapa6">
+          <h3>Etapa 6 · Alertas gratuitas y efectivas</h3>
+          <p class="lead">Una versión premium open source puede alertar muy bien sin pagar servicios complejos. Lo importante es diseñar la jerarquía de alarmas.</p>
+          <div class="grid-2">
+            <article class="card">
+              <h4>Canales recomendados</h4>
+              <ul>
+                <li>Telegram bot para avisos inmediatos.</li>
+                <li>Correo SMTP para reportes diarios o semanales.</li>
+                <li>Panel local en Grafana con umbrales y anotaciones.</li>
+                <li>Webhook hacia servicios propios si luego escalas.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h4>Reglas que sí debes implementar</h4>
+              <ul>
+                <li>Alarma por apertura o inclinación brusca.</li>
+                <li>Alarma por caída de peso fuera de patrón.</li>
+                <li>Alarma por pérdida de conectividad prolongada.</li>
+                <li>Alerta biológica por combinación de humedad, temperatura y audio anómalos.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="callout" style="margin-top:1rem">
+            <h4>Punto clave</h4>
+            <p>La alerta premium no es una notificación por cada sensor. Es una alarma compuesta con contexto: colmena afectada, tipo de evento, severidad, duración y variables asociadas.</p>
+          </div>
+        </section>
+
+        <section class="section" id="etapa7">
+          <h3>Etapa 7 · Añade detección de intrusión biológica</h3>
+          <p class="lead">Aquí es donde tu versión premium se separa de la mayoría de proyectos DIY. La intrusión biológica no se detecta con un sensor mágico; se detecta aprendiendo el comportamiento normal de cada colmena.</p>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="phase">Nivel 1</div>
+              <div>
+                <h4>Reglas multivariable</h4>
+                <p>Empieza creando reglas: humedad alta persistente + temperatura de cría inestable + cambio acústico + pérdida de peso = sospecha de alteración biológica o estrés interno.</p>
+                <div class="tags"><span class="tag">Sin ML</span><span class="tag">Muy útil</span><span class="tag">Bajo costo</span></div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="phase">Nivel 2</div>
+              <div>
+                <h4>Modelos de anomalía con Python</h4>
+                <p>Cuando ya tengas suficiente histórico, usa notebooks con Python para calcular línea base y aplicar Isolation Forest, One-Class SVM o detección basada en ventanas temporales.</p>
+                <div class="tags"><span class="tag">Python</span><span class="tag">scikit-learn</span><span class="tag">Jupyter</span></div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="phase">Nivel 3</div>
+              <div>
+                <h4>Análisis acústico serio</h4>
+                <p>Guarda clips o features de audio y extrae espectro, energía por bandas y patrones repetitivos. La idea premium no es streaming continuo, sino features compactas y eventos detectables.</p>
+                <div class="tags"><span class="tag">librosa</span><span class="tag">FFT</span><span class="tag">Features</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="etapa8">
+          <h3>Etapa 8 · Llévalo a producción como sistema mantenible</h3>
+          <p class="lead">La versión premium no termina cuando funciona una vez. Empieza cuando puedes mantenerla, replicarla y diagnosticarla sin depender de improvisación.</p>
+          <div class="checklist">
+            <div class="check"><strong>Documenta el hardware</strong> pinout, lista de materiales, caja, conectores, fusibles, consumo y calibración.</div>
+            <div class="check"><strong>Versiona el firmware</strong> repositorio Git, changelog, ramas por entorno y OTA controlada.</div>
+            <div class="check"><strong>Estandariza topics MQTT</strong> naming consistente por apiario, colmena, sensor y evento.</div>
+            <div class="check"><strong>Define mantenimiento</strong> revisión de batería, limpieza, recalibración y prueba de alertas.</div>
+            <div class="check"><strong>Guarda histórico útil</strong> no solo datos; también etiquetas manuales de inspección real.</div>
+            <div class="check"><strong>Audita fallos</strong> logs de reinicio, WiFi, watchdog, lectura inválida y desconexiones.</div>
+          </div>
+        </section>
+
+        <section class="section" id="stack">
+          <h3>Stack recomendado</h3>
+          <p class="lead">Si quieres una combinación premium, estable y gratuita, esta es probablemente la ruta más equilibrada.</p>
+          <div class="stack">
+            <div class="stack-row"><h4>Nodo</h4><p><code>ESP32 + ESP-IDF/PlatformIO + sensores I2C/I2S + OTA + MQTT</code></p></div>
+            <div class="stack-row"><h4>Servidor local</h4><p><code>Ubuntu Server o Debian + Docker opcional</code></p></div>
+            <div class="stack-row"><h4>Mensajería</h4><p><code>Mosquitto</code></p></div>
+            <div class="stack-row"><h4>Flujos</h4><p><code>Node-RED</code></p></div>
+            <div class="stack-row"><h4>Base de datos</h4><p><code>InfluxDB</code> o <code>TimescaleDB</code></p></div>
+            <div class="stack-row"><h4>Dashboards</h4><p><code>Grafana</code></p></div>
+            <div class="stack-row"><h4>Analítica</h4><p><code>Python + Jupyter + pandas + scikit-learn + librosa</code></p></div>
+            <div class="stack-row"><h4>Alertas</h4><p><code>Telegram Bot + SMTP + Webhooks</code></p></div>
+          </div>
+        </section>
+
+        <section class="section" id="cronograma">
+          <h3>Cronograma sugerido</h3>
+          <p class="lead">Si trabajas por etapas, esta secuencia evita rehacer todo dos veces.</p>
+          <div class="timeline">
+            <div class="timeline-item"><div class="phase">Semanas 1–2</div><div><h4>Hardware y energía</h4><p>Probar sensores, caja, peso, fuente y consumo real.</p></div></div>
+            <div class="timeline-item"><div class="phase">Semanas 3–4</div><div><h4>Firmware estable</h4><p>Lectura de sensores, MQTT, WiFi, watchdog y OTA.</p></div></div>
+            <div class="timeline-item"><div class="phase">Semanas 5–6</div><div><h4>Backend local</h4><p>Mosquitto, Node-RED, InfluxDB y Grafana funcionando.</p></div></div>
+            <div class="timeline-item"><div class="phase">Semanas 7–8</div><div><h4>Alertas y reglas</h4><p>Definir eventos físicos y biológicos con lógica compuesta.</p></div></div>
+            <div class="timeline-item"><div class="phase">Meses 3–4</div><div><h4>Modelo premium inicial</h4><p>Recolectar histórico, etiquetar inspecciones y entrenar detección de anomalías.</p></div></div>
+          </div>
+        </section>
+
+        <section class="section" id="checklist">
+          <h3>Checklist final</h3>
+          <p class="lead">Si completas esto, ya estarás mucho más cerca de una versión premium real y no solo de un prototipo vistoso.</p>
+          <div class="checklist">
+            <div class="check"><strong>Hardware sellado</strong> caja robusta, conectores y protección ambiental.</div>
+            <div class="check"><strong>Red estable</strong> cobertura WiFi medida en cada colmena.</div>
+            <div class="check"><strong>Firmware modular</strong> recuperación ante fallos y OTA.</div>
+            <div class="check"><strong>Backend propio</strong> MQTT + DB + automatización + dashboards.</div>
+            <div class="check"><strong>Alertas útiles</strong> pocas, claras y con contexto.</div>
+            <div class="check"><strong>Analítica biológica</strong> basada en patrones reales de tus colmenas.</div>
+          </div>
+          <div class="callout" style="margin-top:1rem">
+            <h4>Recomendación práctica</h4>
+            <p>Empieza premium en arquitectura, no necesariamente en costo. Si desde el inicio usas firmware limpio, topics ordenados, backend propio y buen histórico, luego podrás mejorar sensores sin rehacer todo el sistema.</p>
+          </div>
+        </section>
+
+        <div class="footer">Documento interactivo generado para planificar una versión premium de monitoreo de colmenas con ESP32, WiFi y software open source gratuito.</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const btn = document.querySelector('[data-theme-toggle]');
+      let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.setAttribute('data-theme', theme);
+      const paint = () => { btn.textContent = theme === 'dark' ? '☀️' : '🌙'; };
+      paint();
+      btn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', theme); paint(); });
+      const links = [...document.querySelectorAll('.nav a')];
+      const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + entry.target.id));
+          }
+        });
+      }, { rootMargin: '-30% 0px -55% 0px', threshold: 0 });
+      sections.forEach(s => io.observe(s));
+    })();
+  </script>
+</body>
+</html>
